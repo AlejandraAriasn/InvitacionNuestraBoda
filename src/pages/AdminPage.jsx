@@ -177,7 +177,7 @@ const handleWhatsApp = (inv) => {
 
   const msg = `Hola ${names} 💕
 
-Te tenemos una sorpresita... ¡NOS CASAMOS! 🎉💍
+Queremos contarte queee... ¡NOS CASAMOS! 🎉💍
 
 El 5 de septiembre será un día muy especial para nosotros y queremos ${
     esPlural ? 'compartirlo con ustedes' : 'compartirlo contigo'
@@ -192,7 +192,7 @@ Y cuéntanos si ${
 
 ${getRsvpUrl(inv.id)}
 
-¡Con todo el amor del mundo!
+¡Con todo nuestro cariño!
 
 Ale & Ever 🤍✨`
 

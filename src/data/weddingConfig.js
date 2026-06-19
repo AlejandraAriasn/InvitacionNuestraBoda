@@ -6,13 +6,13 @@ export const WEDDING_CONFIG = {
   quote: "La vida nos dio un rompecabezas, y encontramos nuestra pieza faltante.",
   ceremony: {
     hour: "6:00 PM",
-    place: "Parroquia la Ermita de Jesús",
+    place: "Parroquia La Ermita de Jesús",
     address: " Cra. 78 #32e-5, Laureles - Estadio",
     mapUrl: "https://maps.app.goo.gl/G5NiwpTDZts9dpuj8",
   },
   reception: {
-    hour: "7:00 PM",
-    place: "Mi casa campestre, salón perlas",
+    hour: "7:30 PM",
+    place: "Mi Casa Campestre, Salón Perlas",
     address: "Cra. 81 #33aa 23, Laureles - Estadio",
     mapUrl: "https://maps.app.goo.gl/E18AtuMRrdnu4cNN7",
   },

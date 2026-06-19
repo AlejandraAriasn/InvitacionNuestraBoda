@@ -171,8 +171,15 @@ export default function AdminPage() {
     setCopied(id)
     setTimeout(() => setCopied(null), 2000)
   }
+  const formatGuestNames = (guests) => {
+  if (guests.length === 0) return ''
+  if (guests.length === 1) return guests[0]
+  if (guests.length === 2) return guests.join(' y ')
+
+  return `${guests.slice(0, -1).join(', ')} y ${guests[guests.length - 1]}`
+}
 const handleWhatsApp = (inv) => {
-  const names = inv.guests.join(' y ')
+  const names =formatGuestNames(inv.guests)
   const esPlural = inv.guests.length > 1
 
   const msg = `Hola ${names} 💕

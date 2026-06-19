@@ -171,22 +171,29 @@ export default function AdminPage() {
     setCopied(id)
     setTimeout(() => setCopied(null), 2000)
   }
- const handleWhatsApp = (inv) => {
+const handleWhatsApp = (inv) => {
   const names = inv.guests.join(' y ')
+  const esPlural = inv.guests.length > 1
 
   const msg = `Hola ${names} 💕
 
 Te tenemos una sorpresita... ¡NOS CASAMOS! 🎉💍
 
-El 5 de septiembre es el día más importante de nuestras vidas y queremos vivirlo contigo 🥹🤍
+El 5 de septiembre será un día muy especial para nosotros y queremos ${
+    esPlural ? 'compartirlo con ustedes' : 'compartirlo contigo'
+  } 🥹🤍
 
 Mira tu invitación aquí 👇
 ${getUrl(inv.id)}
 
-Y cuéntanos si puedes acompañarnos, para nosotros significa mucho saber 💕
+Y cuéntanos si ${
+    esPlural ? 'pueden acompañarnos' : 'puedes acompañarnos'
+  }, para nosotros significa mucho saber 💕
+
 ${getRsvpUrl(inv.id)}
 
 ¡Con todo el amor del mundo!
+
 Ale & Ever 🤍✨`
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`)

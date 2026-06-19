@@ -112,6 +112,13 @@ const FILTERS = [
   { key: 'declined',  label: 'Rechazadas',  icon: '✕' },
 ]
 
+const PERSON_FILTERS = [
+  { key: 'all',       label: 'Todos',       icon: '✦' },
+  { key: 'pending',   label: 'Pendientes',  icon: '○' },
+  { key: 'confirmed', label: 'Confirmados', icon: '✓' },
+  { key: 'declined',  label: 'Rechazados',  icon: '✕' },
+]
+
 export default function AdminPage() {
   const { invitations, addInvitation, deleteInvitation } = useInvitations()
   const [bulkText, setBulkText]       = useState('')
@@ -119,6 +126,8 @@ export default function AdminPage() {
   const [tab, setTab]                 = useState('create')
   const [filter, setFilter]           = useState('all')
   const [search, setSearch]           = useState('')
+  const [reportFilter, setReportFilter] = useState('all')
+  const [reportSearch, setReportSearch] = useState('')
   const [copied, setCopied]           = useState(null)
   const [showConfirm, setShowConfirm] = useState(null)
   const [guestModal, setGuestModal]   = useState(null) // 'confirmed' | 'declined' | null
@@ -145,6 +154,46 @@ export default function AdminPage() {
     confirmedGuests: invitations.reduce((s, i) => s + (i.rsvp?.length || 0), 0),
     declinedGuests:  invitations.reduce((s, i) => s + (i.rsvpDeclined?.length || 0), 0),
   }), [invitations])
+
+  /* ── Reporte: lista plana de personas con estado individual ── */
+  const getPersonStatus = (inv, name) => {
+    if (inv.rsvp?.includes(name)) return 'confirmed'
+    if (inv.rsvpDeclined?.includes(name)) return 'declined'
+    return 'pending'
+  }
+
+  const allPeople = useMemo(() => {
+    const rows = []
+    invitations.forEach(inv => {
+      inv.guests.forEach(name => {
+        rows.push({
+          name,
+          invitationId: inv.id,
+          status: getPersonStatus(inv, name),
+          groupSize: inv.guests.length,
+          opened: inv.opened,
+        })
+      })
+    })
+    return rows
+  }, [invitations])
+
+  const peopleStats = useMemo(() => ({
+    total:     allPeople.length,
+    confirmed: allPeople.filter(p => p.status === 'confirmed').length,
+    pending:   allPeople.filter(p => p.status === 'pending').length,
+    declined:  allPeople.filter(p => p.status === 'declined').length,
+  }), [allPeople])
+
+  const filteredPeople = useMemo(() => {
+    let list = allPeople
+    if (reportFilter !== 'all') list = list.filter(p => p.status === reportFilter)
+    if (reportSearch.trim()) {
+      const q = reportSearch.toLowerCase()
+      list = list.filter(p => p.name.toLowerCase().includes(q))
+    }
+    return list
+  }, [allPeople, reportFilter, reportSearch])
 
   /* ── Filtrado ── */
   const filtered = useMemo(() => {
@@ -249,6 +298,7 @@ Ale & Ever 🤍✨`
           {[
             { key: 'create', label: '✦ Crear invitaciones' },
             { key: 'list',   label: `✦ Lista (${invitations.length})` },
+            { key: 'report', label: `✦ Reportes` },
           ].map(t => (
             <motion.button key={t.key} onClick={() => setTab(t.key)}
               whileTap={{ scale: 0.96 }}
@@ -605,6 +655,175 @@ Ale & Ever 🤍✨`
                       </motion.div>
                     ))}
                   </AnimatePresence>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* ════════ TAB REPORTES ════════ */}
+          {tab === 'report' && (
+            <motion.div key="report"
+              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.45 }}>
+
+              <Label>Resumen de asistencia</Label>
+              <h2 className="font-serif text-3xl mb-2" style={{ color: "#c9a97a", fontStyle: "italic" }}>
+                Reportes
+              </h2>
+              <OrnamentalLine />
+              <p className="text-sm mb-8" style={{ color: "rgba(255,248,240,0.3)" }}>
+                Estado individual de cada persona invitada, sin importar el grupo al que pertenezca.
+              </p>
+
+              {/* ── STATS PRINCIPALES POR PERSONA ── */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+                {[
+                  { label: 'Total invitados',  value: peopleStats.total,     color: '#c9a97a' },
+                  { label: 'Confirmados',       value: peopleStats.confirmed, color: '#4ade80' },
+                  { label: 'Pendientes',        value: peopleStats.pending,   color: '#c8886a' },
+                  { label: 'Rechazados',        value: peopleStats.declined,  color: '#f87171' },
+                ].map((s, i) => (
+                  <motion.div key={i}
+                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.07 }}
+                    className="rounded-2xl p-5 text-center"
+                    style={{ border: "1px solid rgba(201,169,122,0.1)", background: "rgba(201,169,122,0.04)" }}>
+                    <p className="font-serif text-4xl mb-1" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-[9px] tracking-[2px] uppercase" style={{ color: "rgba(255,248,240,0.25)" }}>{s.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* ── BARRA DE PROGRESO ── */}
+              {peopleStats.total > 0 && (
+                <div className="mb-10">
+                  <div className="flex h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(201,169,122,0.08)" }}>
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${(peopleStats.confirmed / peopleStats.total) * 100}%` }}
+                      transition={{ duration: 0.8 }} style={{ background: '#4ade80' }} />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${(peopleStats.declined / peopleStats.total) * 100}%` }}
+                      transition={{ duration: 0.8, delay: 0.1 }} style={{ background: '#f87171' }} />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${(peopleStats.pending / peopleStats.total) * 100}%` }}
+                      transition={{ duration: 0.8, delay: 0.2 }} style={{ background: '#c8886a' }} />
+                  </div>
+                  <div className="flex gap-4 mt-2.5 text-[9px] tracking-[1px] uppercase" style={{ color: "rgba(255,248,240,0.3)" }}>
+                    <span><span style={{ color: '#4ade80' }}>●</span> Confirmados {Math.round((peopleStats.confirmed / peopleStats.total) * 100)}%</span>
+                    <span><span style={{ color: '#f87171' }}>●</span> Rechazados {Math.round((peopleStats.declined / peopleStats.total) * 100)}%</span>
+                    <span><span style={{ color: '#c8886a' }}>●</span> Pendientes {Math.round((peopleStats.pending / peopleStats.total) * 100)}%</span>
+                  </div>
+                </div>
+              )}
+
+              <OrnamentalLine />
+
+              {/* ── FILTROS POR PERSONA ── */}
+              <div className="flex flex-wrap gap-2 mt-6 mb-4">
+                {PERSON_FILTERS.map(f => {
+                  const count = f.key === 'all'
+                    ? allPeople.length
+                    : allPeople.filter(p => p.status === f.key).length
+                  const active = reportFilter === f.key
+                  return (
+                    <motion.button key={f.key} onClick={() => setReportFilter(f.key)} whileTap={{ scale: 0.94 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-[10px] tracking-[2px] uppercase font-bold transition-all"
+                      style={active ? {
+                        background: "linear-gradient(135deg, rgba(139,58,58,0.6), rgba(201,169,122,0.3))",
+                        border: "1px solid rgba(201,169,122,0.4)",
+                        color: "#c9a97a",
+                      } : {
+                        border: "1px solid rgba(201,169,122,0.12)",
+                        color: "rgba(201,169,122,0.35)",
+                        background: "transparent",
+                      }}>
+                      <span style={{ fontFamily: "serif" }}>{f.icon}</span>
+                      <span>{f.label}</span>
+                      <span className="rounded-full px-1.5 py-0.5 text-[9px]"
+                        style={{ background: "rgba(201,169,122,0.1)", color: "rgba(201,169,122,0.6)" }}>
+                        {count}
+                      </span>
+                    </motion.button>
+                  )
+                })}
+              </div>
+
+              {/* ── BÚSQUEDA POR PERSONA ── */}
+              <div className="relative mb-6">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm" style={{ color: "rgba(201,169,122,0.3)" }}>✦</span>
+                <input
+                  type="text"
+                  value={reportSearch}
+                  onChange={e => setReportSearch(e.target.value)}
+                  placeholder="Buscar por nombre..."
+                  className="w-full rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none transition-all"
+                  style={{
+                    background: "rgba(201,169,122,0.05)",
+                    border: "1px solid rgba(201,169,122,0.12)",
+                    color: "rgba(255,248,240,0.7)",
+                    caretColor: "#c9a97a",
+                  }}
+                  onFocus={e => { e.target.style.borderColor = "rgba(201,169,122,0.35)" }}
+                  onBlur={e => { e.target.style.borderColor = "rgba(201,169,122,0.12)" }}
+                />
+                {reportSearch && (
+                  <button onClick={() => setReportSearch('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs transition-all"
+                    style={{ color: "rgba(201,169,122,0.35)" }}>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* ── LISTA DETALLADA DE PERSONAS ── */}
+              {filteredPeople.length === 0 ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="text-center py-24 rounded-3xl"
+                  style={{ border: "1px solid rgba(201,169,122,0.1)", background: "rgba(201,169,122,0.03)" }}>
+                  <p className="font-serif text-5xl mb-4" style={{ color: "rgba(201,169,122,0.2)" }}>✦</p>
+                  <p className="font-serif text-xl mb-2" style={{ color: "rgba(201,169,122,0.4)", fontStyle: "italic" }}>
+                    {reportSearch ? 'Sin resultados' : 'Sin invitados aquí'}
+                  </p>
+                  <p className="text-sm" style={{ color: "rgba(255,248,240,0.2)" }}>
+                    {reportSearch ? `No hay invitados con "${reportSearch}"` : 'Prueba con otro filtro'}
+                  </p>
+                </motion.div>
+              ) : (
+                <div>
+                  <p className="text-[9px] tracking-[3px] uppercase mb-4" style={{ color: "rgba(201,169,122,0.35)" }}>
+                    {filteredPeople.length} {filteredPeople.length === 1 ? 'invitado' : 'invitados'}
+                    {reportSearch && ` · "${reportSearch}"`}
+                  </p>
+
+                  <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(201,169,122,0.1)" }}>
+                    <AnimatePresence>
+                      {filteredPeople.map((p, i) => (
+                        <motion.div key={`${p.invitationId}-${p.name}`}
+                          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                          transition={{ delay: i * 0.02 }}
+                          className="flex items-center justify-between gap-4 px-5 py-3.5"
+                          style={{
+                            background: i % 2 === 0 ? "rgba(201,169,122,0.035)" : "transparent",
+                            borderBottom: i < filteredPeople.length - 1 ? "1px solid rgba(201,169,122,0.06)" : "none",
+                          }}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-sm font-light truncate" style={{ color: "rgba(255,248,240,0.85)" }}>
+                              {p.name}
+                            </span>
+                            {p.groupSize > 1 && (
+                              <span className="text-[9px] px-2 py-0.5 rounded-full flex-shrink-0"
+                                style={{ background: "rgba(201,169,122,0.08)", color: "rgba(201,169,122,0.45)" }}>
+                                grupo de {p.groupSize}
+                              </span>
+                            )}
+                            {p.opened && (
+                              <span className="text-[10px] flex-shrink-0" title="Invitación abierta" style={{ color: "rgba(201,169,122,0.3)" }}>
+                                👁
+                              </span>
+                            )}
+                          </div>
+                          <RsvpBadge status={p.status} opened={false} />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </div>
               )}
             </motion.div>

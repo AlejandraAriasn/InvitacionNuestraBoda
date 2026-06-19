@@ -173,7 +173,22 @@ export default function AdminPage() {
   }
   const handleWhatsApp = (inv) => {
     const names = inv.guests.join(' y ')
-    const msg = `💌 Invitación de boda\n\nHola ${names} 💖\n\nVer invitación:\n${getUrl(inv.id)}\n\nConfirmar asistencia:\n${getRsvpUrl(inv.id)}`
+    const msg = `✨ Con mucha alegría queremos compartir contigo un momento muy especial en nuestras vidas. ✨
+
+Hola ${names} 💖
+
+Nos encantaría que nos acompañaras a celebrar nuestra boda y formar parte de este día tan importante para nosotros.
+
+💌 Ver invitación:
+${getUrl(inv.id)}
+
+💍 Confirmar asistencia:
+${getRsvpUrl(inv.id)}
+
+Con cariño,
+${cfg.bride} & ${cfg.groom} 🤍`
+
+
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`)
   }
   const handleReminder = (inv) => {

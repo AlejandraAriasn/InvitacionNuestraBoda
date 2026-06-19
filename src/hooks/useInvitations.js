@@ -17,12 +17,13 @@ export function useInvitations() {
     return () => unsubscribe();
   }, []);
 
-  const addInvitation = async (guests) => {
+  const addInvitation = async (guests, extra = {}) => {
     const docRef = await addDoc(colRef, {
       guests,
+      ...extra,                      // ← guarda side: 'groom' | 'bride'
       createdAt: new Date().toISOString(),
       opened: false,
-      rsvpStatus: 'pending',   // 'pending' | 'confirmed' | 'declined'
+      rsvpStatus: 'pending',
       rsvp: [],
       confirmedCount: 0,
     });
@@ -43,10 +44,9 @@ export function useInvitations() {
     await updateDoc(doc(db, "invitations", id), { opened: true });
   };
 
-  // Llamado desde RsvpPage cuando el invitado confirma/rechaza
   const updateRsvp = async (id, { status, confirmedNames }) => {
     await updateDoc(doc(db, "invitations", id), {
-      rsvpStatus: status,           // 'confirmed' | 'declined'
+      rsvpStatus: status,
       rsvp: confirmedNames || [],
       confirmedCount: confirmedNames?.length || 0,
       respondedAt: new Date().toISOString(),

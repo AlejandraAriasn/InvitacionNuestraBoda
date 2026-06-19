@@ -80,6 +80,127 @@ function Label({ children }) {
 }
 
 /* ─────────────────────────────────────────
+   SELECTOR LADO (Novio / Novia)
+───────────────────────────────────────── */
+function SideSelector({ value, onChange }) {
+  const options = [
+    {
+      key: 'groom',
+      label: 'Novio · Ever',
+      icon: '💙',
+      activeGrad: 'linear-gradient(135deg, #1e3a5f, #2d6a9f)',
+      activeBorder: 'rgba(100,160,220,0.5)',
+      activeColor: '#90c4f0',
+      inactiveColor: 'rgba(100,160,220,0.35)',
+    },
+    {
+      key: 'bride',
+      label: 'Novia · Alejandra',
+      icon: '🌸',
+      activeGrad: 'linear-gradient(135deg, #5f1e3a, #9f2d60)',
+      activeBorder: 'rgba(220,100,150,0.5)',
+      activeColor: '#f0a0c0',
+      inactiveColor: 'rgba(220,100,150,0.35)',
+    },
+  ]
+
+  return (
+    <div>
+      <p className="text-[9px] tracking-[4px] uppercase mb-3" style={{ color: "rgba(201,169,122,0.45)" }}>
+        — ¿De parte de quién? —
+      </p>
+      <div className="flex gap-3">
+        {options.map(opt => {
+          const active = value === opt.key
+          return (
+            <motion.button
+              key={opt.key}
+              onClick={() => onChange(opt.key)}
+              whileTap={{ scale: 0.96 }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all"
+              style={active ? {
+                background: opt.activeGrad,
+                border: `1px solid ${opt.activeBorder}`,
+                color: opt.activeColor,
+                boxShadow: `0 4px 18px ${opt.activeBorder}`,
+              } : {
+                border: '1px solid rgba(201,169,122,0.15)',
+                color: opt.inactiveColor,
+                background: 'rgba(201,169,122,0.04)',
+              }}
+              whileHover={!active ? { background: 'rgba(201,169,122,0.08)' } : {}}>
+              <span>{opt.icon}</span>
+              <span>{opt.label}</span>
+            </motion.button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
+   BADGE DE LADO
+───────────────────────────────────────── */
+function SideBadge({ side }) {
+  if (!side) return null
+  const isGroom = side === 'groom'
+  return (
+    <span
+      className="text-[10px] px-2.5 py-0.5 rounded-full border"
+      style={isGroom ? {
+        background: 'rgba(45,106,159,0.15)',
+        color: '#90c4f0',
+        borderColor: 'rgba(45,106,159,0.3)',
+      } : {
+        background: 'rgba(159,45,96,0.15)',
+        color: '#f0a0c0',
+        borderColor: 'rgba(159,45,96,0.3)',
+      }}>
+      {isGroom ? '💙 Ever' : '🌸 Ale'}
+    </span>
+  )
+}
+
+/* ─────────────────────────────────────────
+   FILTRO DE LADO (pill buttons)
+───────────────────────────────────────── */
+function SideFilter({ value, onChange, counts }) {
+  const options = [
+    { key: 'all',   label: 'Todos',        icon: '✦', color: 'rgba(201,169,122,0.6)' },
+    { key: 'groom', label: 'Ever',          icon: '💙', color: '#90c4f0' },
+    { key: 'bride', label: 'Alejandra',     icon: '🌸', color: '#f0a0c0' },
+  ]
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map(f => {
+        const active = value === f.key
+        return (
+          <motion.button key={f.key} onClick={() => onChange(f.key)} whileTap={{ scale: 0.94 }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-[10px] tracking-[2px] uppercase font-bold transition-all"
+            style={active ? {
+              background: 'linear-gradient(135deg, rgba(139,58,58,0.6), rgba(201,169,122,0.3))',
+              border: '1px solid rgba(201,169,122,0.4)',
+              color: '#c9a97a',
+            } : {
+              border: '1px solid rgba(201,169,122,0.12)',
+              color: 'rgba(201,169,122,0.35)',
+              background: 'transparent',
+            }}>
+            <span>{f.icon}</span>
+            <span>{f.label}</span>
+            <span className="rounded-full px-1.5 py-0.5 text-[9px]"
+              style={{ background: 'rgba(201,169,122,0.1)', color: 'rgba(201,169,122,0.6)' }}>
+              {counts[f.key] ?? 0}
+            </span>
+          </motion.button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
    BADGE DE ESTADO RSVP
 ───────────────────────────────────────── */
 function RsvpBadge({ status, opened }) {
@@ -123,19 +244,21 @@ export default function AdminPage() {
   const { invitations, addInvitation, deleteInvitation } = useInvitations()
   const [bulkText, setBulkText]       = useState('')
   const [preview, setPreview]         = useState([])
+  const [createSide, setCreateSide]   = useState('groom')  // ← nuevo
   const [tab, setTab]                 = useState('create')
   const [filter, setFilter]           = useState('all')
+  const [sideFilter, setSideFilter]   = useState('all')    // ← nuevo (lista)
   const [search, setSearch]           = useState('')
-  const [reportFilter, setReportFilter] = useState('all')
-  const [reportSearch, setReportSearch] = useState('')
+  const [reportFilter, setReportFilter]     = useState('all')
+  const [reportSideFilter, setReportSideFilter] = useState('all') // ← nuevo (reportes)
+  const [reportSearch, setReportSearch]     = useState('')
   const [copied, setCopied]           = useState(null)
   const [showConfirm, setShowConfirm] = useState(null)
-  const [guestModal, setGuestModal]   = useState(null) // 'confirmed' | 'declined' | null
+  const [guestModal, setGuestModal]   = useState(null)
   const cfg = WEDDING_CONFIG
 
   const getStatus = (inv) => {
     if (inv.rsvpStatus) return inv.rsvpStatus
-    // Derivar desde los arrays cuando rsvpStatus no fue guardado (ej. guardado parcial)
     const confirmed = inv.rsvp?.length || 0
     const declined  = inv.rsvpDeclined?.length || 0
     if (confirmed > 0) return 'confirmed'
@@ -155,6 +278,21 @@ export default function AdminPage() {
     declinedGuests:  invitations.reduce((s, i) => s + (i.rsvpDeclined?.length || 0), 0),
   }), [invitations])
 
+  /* ── Conteos por lado (lista) ── */
+  const sideCounts = useMemo(() => {
+    let base = invitations
+    if (filter !== 'all') base = base.filter(i => getStatus(i) === filter)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      base = base.filter(i => i.guests.some(g => g.toLowerCase().includes(q)))
+    }
+    return {
+      all:   base.length,
+      groom: base.filter(i => i.side === 'groom').length,
+      bride: base.filter(i => i.side === 'bride').length,
+    }
+  }, [invitations, filter, search])
+
   /* ── Reporte: lista plana de personas con estado individual ── */
   const getPersonStatus = (inv, name) => {
     if (inv.rsvp?.includes(name)) return 'confirmed'
@@ -172,6 +310,7 @@ export default function AdminPage() {
           status: getPersonStatus(inv, name),
           groupSize: inv.guests.length,
           opened: inv.opened,
+          side: inv.side || null,
         })
       })
     })
@@ -185,32 +324,50 @@ export default function AdminPage() {
     declined:  allPeople.filter(p => p.status === 'declined').length,
   }), [allPeople])
 
+  /* ── Conteos por lado (reportes) ── */
+  const reportSideCounts = useMemo(() => {
+    let base = allPeople
+    if (reportFilter !== 'all') base = base.filter(p => p.status === reportFilter)
+    if (reportSearch.trim()) {
+      const q = reportSearch.toLowerCase()
+      base = base.filter(p => p.name.toLowerCase().includes(q))
+    }
+    return {
+      all:   base.length,
+      groom: base.filter(p => p.side === 'groom').length,
+      bride: base.filter(p => p.side === 'bride').length,
+    }
+  }, [allPeople, reportFilter, reportSearch])
+
   const filteredPeople = useMemo(() => {
     let list = allPeople
     if (reportFilter !== 'all') list = list.filter(p => p.status === reportFilter)
+    if (reportSideFilter !== 'all') list = list.filter(p => p.side === reportSideFilter)
     if (reportSearch.trim()) {
       const q = reportSearch.toLowerCase()
       list = list.filter(p => p.name.toLowerCase().includes(q))
     }
     return list
-  }, [allPeople, reportFilter, reportSearch])
+  }, [allPeople, reportFilter, reportSideFilter, reportSearch])
 
-  /* ── Filtrado ── */
+  /* ── Filtrado lista ── */
   const filtered = useMemo(() => {
     let list = invitations
     if (filter !== 'all') list = list.filter(i => getStatus(i) === filter)
+    if (sideFilter !== 'all') list = list.filter(i => i.side === sideFilter)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(i => i.guests.some(g => g.toLowerCase().includes(q)))
     }
     return list
-  }, [invitations, filter, search])
+  }, [invitations, filter, sideFilter, search])
 
   /* ── Acciones ── */
   const handlePreview   = () => setPreview(parseGuestList(bulkText))
   const handleCreateAll = async () => {
     const groups = parseGuestList(bulkText)
-    await Promise.all(groups.map(g => addInvitation(g)))
+    // Pasamos `side` a cada invitación
+    await Promise.all(groups.map(g => addInvitation(g, { side: createSide })))
     setBulkText(''); setPreview([]); setTab('list')
   }
   const getUrl     = id => `${BASE_URL}/invite/${id}`
@@ -221,39 +378,17 @@ export default function AdminPage() {
     setTimeout(() => setCopied(null), 2000)
   }
   const formatGuestNames = (guests) => {
-  if (guests.length === 0) return ''
-  if (guests.length === 1) return guests[0]
-  if (guests.length === 2) return guests.join(' y ')
-
-  return `${guests.slice(0, -1).join(', ')} y ${guests[guests.length - 1]}`
-}
-const handleWhatsApp = (inv) => {
-  const names =formatGuestNames(inv.guests)
-  const esPlural = inv.guests.length > 1
-
-  const msg = `Hola ${names} 💕
-
-Queremos contarte queee... ¡NOS CASAMOS! 🎉💍
-
-El 5 de septiembre será un día muy especial para nosotros y queremos ${
-    esPlural ? 'compartirlo con ustedes' : 'compartirlo contigo'
-  } 🥹🤍
-
-Mira tu invitación aquí 👇
-${getUrl(inv.id)}
-
-Y cuéntanos si ${
-    esPlural ? 'pueden acompañarnos' : 'puedes acompañarnos'
-  }, para nosotros significa mucho saber 💕
-
-${getRsvpUrl(inv.id)}
-
-¡Con todo nuestro cariño!
-
-Ale & Ever 🤍✨`
-
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`)
-}
+    if (guests.length === 0) return ''
+    if (guests.length === 1) return guests[0]
+    if (guests.length === 2) return guests.join(' y ')
+    return `${guests.slice(0, -1).join(', ')} y ${guests[guests.length - 1]}`
+  }
+  const handleWhatsApp = (inv) => {
+    const names = formatGuestNames(inv.guests)
+    const esPlural = inv.guests.length > 1
+    const msg = `Hola ${names} 💕\n\nQueremos contarte queee... ¡NOS CASAMOS! 🎉💍\n\nEl 5 de septiembre será un día muy especial para nosotros y queremos ${esPlural ? 'compartirlo con ustedes' : 'compartirlo contigo'} 🥹🤍\n\nMira tu invitación aquí 👇\n${getUrl(inv.id)}\n\nY cuéntanos si ${esPlural ? 'pueden acompañarnos' : 'puedes acompañarnos'}, para nosotros significa mucho saber 💕\n\n${getRsvpUrl(inv.id)}\n\n¡Con todo nuestro cariño!\n\nAle & Ever 🤍✨`
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`)
+  }
   const handleReminder = (inv) => {
     const names = inv.guests.join(' y ')
     const msg = `💌 Hola ${names} 💖\n\n¿Nos confirmas si podrás acompañarnos? 🥹✨\n\nNos haría muy felices contar contigo 💕\n\nConfirma aquí:\n${getRsvpUrl(inv.id)}\n\n¡Te esperamos! 💃`
@@ -274,27 +409,27 @@ Ale & Ever 🤍✨`
 
       {/* ── HEADER ── */}
       <div className="sticky top-0 z-40 border-b" style={{ background: "rgba(18,8,7,0.85)", backdropFilter: "blur(16px)", borderColor: "rgba(201,169,122,0.12)" }}>
-        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="min-w-0">
             <Label>Panel de administración</Label>
-            <h1 className="font-serif text-xl" style={{ color: "#c9a97a", fontStyle: "italic" }}>
+            <h1 className="font-serif text-lg sm:text-xl truncate" style={{ color: "#c9a97a", fontStyle: "italic" }}>
               {cfg.bride} & {cfg.groom}
-              <span className="font-sans not-italic text-sm ml-3" style={{ color: "rgba(201,169,122,0.4)" }}>
+              <span className="font-sans not-italic text-xs sm:text-sm ml-2 sm:ml-3" style={{ color: "rgba(201,169,122,0.4)" }}>
                 · {cfg.dateDisplay}
               </span>
             </h1>
           </div>
-          <div className="text-right">
-            <p className="font-serif text-3xl" style={{ color: "#c9a97a" }}>{stats.guests}</p>
+          <div className="text-left sm:text-right flex-shrink-0">
+            <p className="font-serif text-2xl sm:text-3xl" style={{ color: "#c9a97a" }}>{stats.guests}</p>
             <p className="text-[9px] tracking-[3px] uppercase" style={{ color: "rgba(201,169,122,0.35)" }}>invitados totales</p>
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-8 pb-20">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-20">
 
         {/* ── TABS ── */}
-        <div className="flex gap-3 mb-10">
+        <div className="flex gap-2 sm:gap-3 mb-8 sm:mb-10 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap pb-1" style={{ scrollbarWidth: "none" }}>
           {[
             { key: 'create', label: '✦ Crear invitaciones' },
             { key: 'list',   label: `✦ Lista (${invitations.length})` },
@@ -302,7 +437,7 @@ Ale & Ever 🤍✨`
           ].map(t => (
             <motion.button key={t.key} onClick={() => setTab(t.key)}
               whileTap={{ scale: 0.96 }}
-              className="px-7 py-2.5 rounded-full text-[10px] tracking-[3px] uppercase font-bold transition-all"
+              className="px-5 sm:px-7 py-2.5 rounded-full text-[10px] tracking-[2px] sm:tracking-[3px] uppercase font-bold transition-all flex-shrink-0 whitespace-nowrap"
               style={tab === t.key ? {
                 background: "linear-gradient(135deg, #8b3a3a, #c9a97a)",
                 color: "#fff8f0",
@@ -337,6 +472,11 @@ Ale & Ever 🤍✨`
                   <p className="text-sm mb-6 leading-relaxed" style={{ color: "rgba(255,248,240,0.35)" }}>
                     Un nombre por línea. Separa grupos con línea en blanco. Cada grupo genera una invitación independiente.
                   </p>
+
+                  {/* Selector lado */}
+                  <div className="mb-5">
+                    <SideSelector value={createSide} onChange={setCreateSide} />
+                  </div>
 
                   {/* Formato ejemplo */}
                   <div className="mb-5 p-4 rounded-2xl" style={{ background: "rgba(201,169,122,0.06)", border: "1px solid rgba(201,169,122,0.12)" }}>
@@ -385,7 +525,7 @@ Ale & Ever 🤍✨`
                   <OrnamentalLine />
                   <p className="text-sm mb-5" style={{ color: "rgba(255,248,240,0.3)" }}>
                     {preview.length > 0
-                      ? `${preview.length} invitaciones · ${preview.reduce((s, g) => s + g.length, 0)} personas`
+                      ? `${preview.length} invitaciones · ${preview.reduce((s, g) => s + g.length, 0)} personas · ${createSide === 'groom' ? '💙 Ever' : '🌸 Alejandra'}`
                       : 'Presiona "Vista previa" para ver los grupos'}
                   </p>
                   <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
@@ -400,9 +540,12 @@ Ale & Ever 🤍✨`
                             <span className="text-[9px] tracking-[3px] uppercase" style={{ color: "rgba(201,169,122,0.4)" }}>
                               Invitación {i + 1}
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(201,169,122,0.1)", color: "#c9a97a" }}>
-                              {group.length} {group.length === 1 ? 'persona' : 'personas'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <SideBadge side={createSide} />
+                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(201,169,122,0.1)", color: "#c9a97a" }}>
+                                {group.length} {group.length === 1 ? 'persona' : 'personas'}
+                              </span>
+                            </div>
                           </div>
                           {group.map((name, j) => (
                             <p key={j} className="text-sm py-1.5" style={{ color: "rgba(255,248,240,0.65)", borderBottom: "1px solid rgba(201,169,122,0.06)" }}>
@@ -425,7 +568,7 @@ Ale & Ever 🤍✨`
               transition={{ duration: 0.45 }}>
 
               {/* ── STATS PRINCIPALES ── */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-4">
                 {[
                   { label: 'Total invitaciones', value: stats.total,     color: '#c9a97a',  modal: null        },
                   { label: 'Confirmadas',         value: stats.confirmed, color: '#4ade80',  modal: 'confirmed' },
@@ -436,15 +579,15 @@ Ale & Ever 🤍✨`
                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.07 }}
                     onClick={() => s.modal && setGuestModal(s.modal)}
-                    className="rounded-2xl p-5 text-center transition-all"
+                    className="rounded-2xl p-3.5 sm:p-5 text-center transition-all"
                     style={{
                       border: "1px solid rgba(201,169,122,0.1)",
                       background: "rgba(201,169,122,0.04)",
                       cursor: s.modal ? "pointer" : "default",
                     }}
                     whileHover={s.modal ? { borderColor: "rgba(201,169,122,0.28)", background: "rgba(201,169,122,0.08)", scale: 1.02 } : {}}>
-                    <p className="font-serif text-4xl mb-1" style={{ color: s.color }}>{s.value}</p>
-                    <p className="text-[9px] tracking-[2px] uppercase" style={{ color: "rgba(255,248,240,0.25)" }}>{s.label}</p>
+                    <p className="font-serif text-3xl sm:text-4xl mb-1" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-[8px] sm:text-[9px] tracking-[1px] sm:tracking-[2px] uppercase" style={{ color: "rgba(255,248,240,0.25)" }}>{s.label}</p>
                     {s.modal && (
                       <p className="text-[8px] tracking-[1px] uppercase mt-1" style={{ color: "rgba(201,169,122,0.3)" }}>
                         Ver detalle ✦
@@ -455,7 +598,7 @@ Ale & Ever 🤍✨`
               </div>
 
               {/* ── STATS EXTRAS ── */}
-              <div className="grid grid-cols-3 gap-3 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-8">
                 {[
                   { icon: '👥', label: 'personas confirmadas', value: stats.confirmedGuests, color: '#4ade80' },
                   { icon: '✕',  label: 'personas rechazaron',  value: stats.declinedGuests,  color: '#f87171' },
@@ -480,8 +623,8 @@ Ale & Ever 🤍✨`
 
               <OrnamentalLine />
 
-              {/* ── FILTROS ── */}
-              <div className="flex flex-wrap gap-2 mt-6 mb-4">
+              {/* ── FILTROS ESTADO ── */}
+              <div className="flex flex-wrap gap-2 mt-6 mb-3">
                 {FILTERS.map(f => {
                   const count = f.key === 'all'
                     ? invitations.length
@@ -508,6 +651,11 @@ Ale & Ever 🤍✨`
                     </motion.button>
                   )
                 })}
+              </div>
+
+              {/* ── FILTRO LADO ── */}
+              <div className="mb-5">
+                <SideFilter value={sideFilter} onChange={setSideFilter} counts={sideCounts} />
               </div>
 
               {/* ── BÚSQUEDA ── */}
@@ -555,6 +703,8 @@ Ale & Ever 🤍✨`
                   <p className="text-[9px] tracking-[3px] uppercase mb-4" style={{ color: "rgba(201,169,122,0.35)" }}>
                     {filtered.length} {filtered.length === 1 ? 'invitación' : 'invitaciones'}
                     {search && ` · "${search}"`}
+                    {sideFilter === 'groom' && ' · 💙 Ever'}
+                    {sideFilter === 'bride' && ' · 🌸 Alejandra'}
                   </p>
 
                   <AnimatePresence>
@@ -566,7 +716,7 @@ Ale & Ever 🤍✨`
                         style={{ border: "1px solid rgba(201,169,122,0.1)", background: "rgba(201,169,122,0.04)" }}
                         whileHover={{ borderColor: "rgba(201,169,122,0.25)", background: "rgba(201,169,122,0.07)" }}>
 
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                           <div className="flex-1 min-w-0">
 
                             {/* Badges */}
@@ -575,6 +725,9 @@ Ale & Ever 🤍✨`
                                 style={{ background: "rgba(201,169,122,0.1)", color: "#c9a97a", border: "1px solid rgba(201,169,122,0.2)" }}>
                                 {inv.guests.length} {inv.guests.length === 1 ? 'persona' : 'personas'}
                               </span>
+
+                              {/* Badge de lado */}
+                              {inv.side && <SideBadge side={inv.side} />}
 
                               <RsvpBadge status={getStatus(inv)} opened={inv.opened} />
 
@@ -623,14 +776,14 @@ Ale & Ever 🤍✨`
                           </div>
 
                           {/* ── ACCIONES ── */}
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
                             {[
                               { icon: '📲', onClick: () => handleWhatsApp(inv), title: 'WhatsApp', color: 'rgba(74,197,74,0.15)', border: 'rgba(74,197,74,0.2)' },
                               ...(getStatus(inv) === 'pending' ? [{ icon: '🔔', onClick: () => handleReminder(inv), title: 'Recordatorio', color: 'rgba(200,136,106,0.15)', border: 'rgba(200,136,106,0.2)' }] : []),
                               { icon: copied === inv.id ? '✓' : '🔗', onClick: () => handleCopy(inv.id), title: 'Copiar enlace', color: 'rgba(201,169,122,0.1)', border: 'rgba(201,169,122,0.2)' },
                             ].map((btn, bi) => (
                               <motion.button key={bi} onClick={btn.onClick} title={btn.title} whileTap={{ scale: 0.9 }}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center text-base transition-all"
+                                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-sm sm:text-base transition-all"
                                 style={{ background: btn.color, border: `1px solid ${btn.border}` }}
                                 whileHover={{ scale: 1.08 }}>
                                 {btn.icon}
@@ -638,14 +791,14 @@ Ale & Ever 🤍✨`
                             ))}
 
                             <motion.a href={getUrl(inv.id)} rel="noreferrer" whileTap={{ scale: 0.9 }}
-                              className="w-9 h-9 rounded-xl flex items-center justify-center text-base transition-all"
+                              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-sm sm:text-base transition-all"
                               style={{ background: "rgba(201,169,122,0.06)", border: "1px solid rgba(201,169,122,0.12)" }}
                               whileHover={{ scale: 1.08 }}>
                               👁
                             </motion.a>
 
                             <motion.button onClick={() => setShowConfirm(inv.id)} whileTap={{ scale: 0.9 }}
-                              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all"
+                              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-sm transition-all"
                               style={{ background: "rgba(180,30,30,0.06)", border: "1px solid rgba(180,30,30,0.12)", color: "rgba(248,113,113,0.4)" }}
                               whileHover={{ scale: 1.08, color: "#f87171" }}>
                               ✕
@@ -676,7 +829,7 @@ Ale & Ever 🤍✨`
               </p>
 
               {/* ── STATS PRINCIPALES POR PERSONA ── */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-8 sm:mb-10">
                 {[
                   { label: 'Total invitados',  value: peopleStats.total,     color: '#c9a97a' },
                   { label: 'Confirmados',       value: peopleStats.confirmed, color: '#4ade80' },
@@ -686,17 +839,17 @@ Ale & Ever 🤍✨`
                   <motion.div key={i}
                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.07 }}
-                    className="rounded-2xl p-5 text-center"
+                    className="rounded-2xl p-3.5 sm:p-5 text-center"
                     style={{ border: "1px solid rgba(201,169,122,0.1)", background: "rgba(201,169,122,0.04)" }}>
-                    <p className="font-serif text-4xl mb-1" style={{ color: s.color }}>{s.value}</p>
-                    <p className="text-[9px] tracking-[2px] uppercase" style={{ color: "rgba(255,248,240,0.25)" }}>{s.label}</p>
+                    <p className="font-serif text-3xl sm:text-4xl mb-1" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-[8px] sm:text-[9px] tracking-[1px] sm:tracking-[2px] uppercase" style={{ color: "rgba(255,248,240,0.25)" }}>{s.label}</p>
                   </motion.div>
                 ))}
               </div>
 
               {/* ── BARRA DE PROGRESO ── */}
               {peopleStats.total > 0 && (
-                <div className="mb-10">
+                <div className="mb-8 sm:mb-10">
                   <div className="flex h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(201,169,122,0.08)" }}>
                     <motion.div initial={{ width: 0 }} animate={{ width: `${(peopleStats.confirmed / peopleStats.total) * 100}%` }}
                       transition={{ duration: 0.8 }} style={{ background: '#4ade80' }} />
@@ -705,7 +858,7 @@ Ale & Ever 🤍✨`
                     <motion.div initial={{ width: 0 }} animate={{ width: `${(peopleStats.pending / peopleStats.total) * 100}%` }}
                       transition={{ duration: 0.8, delay: 0.2 }} style={{ background: '#c8886a' }} />
                   </div>
-                  <div className="flex gap-4 mt-2.5 text-[9px] tracking-[1px] uppercase" style={{ color: "rgba(255,248,240,0.3)" }}>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2.5 text-[9px] tracking-[1px] uppercase" style={{ color: "rgba(255,248,240,0.3)" }}>
                     <span><span style={{ color: '#4ade80' }}>●</span> Confirmados {Math.round((peopleStats.confirmed / peopleStats.total) * 100)}%</span>
                     <span><span style={{ color: '#f87171' }}>●</span> Rechazados {Math.round((peopleStats.declined / peopleStats.total) * 100)}%</span>
                     <span><span style={{ color: '#c8886a' }}>●</span> Pendientes {Math.round((peopleStats.pending / peopleStats.total) * 100)}%</span>
@@ -715,8 +868,8 @@ Ale & Ever 🤍✨`
 
               <OrnamentalLine />
 
-              {/* ── FILTROS POR PERSONA ── */}
-              <div className="flex flex-wrap gap-2 mt-6 mb-4">
+              {/* ── FILTROS ESTADO POR PERSONA ── */}
+              <div className="flex flex-wrap gap-2 mt-6 mb-3">
                 {PERSON_FILTERS.map(f => {
                   const count = f.key === 'all'
                     ? allPeople.length
@@ -743,6 +896,11 @@ Ale & Ever 🤍✨`
                     </motion.button>
                   )
                 })}
+              </div>
+
+              {/* ── FILTRO LADO (reportes) ── */}
+              <div className="mb-5">
+                <SideFilter value={reportSideFilter} onChange={setReportSideFilter} counts={reportSideCounts} />
               </div>
 
               {/* ── BÚSQUEDA POR PERSONA ── */}
@@ -790,6 +948,8 @@ Ale & Ever 🤍✨`
                   <p className="text-[9px] tracking-[3px] uppercase mb-4" style={{ color: "rgba(201,169,122,0.35)" }}>
                     {filteredPeople.length} {filteredPeople.length === 1 ? 'invitado' : 'invitados'}
                     {reportSearch && ` · "${reportSearch}"`}
+                    {reportSideFilter === 'groom' && ' · 💙 Ever'}
+                    {reportSideFilter === 'bride' && ' · 🌸 Alejandra'}
                   </p>
 
                   <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(201,169,122,0.1)" }}>
@@ -798,21 +958,22 @@ Ale & Ever 🤍✨`
                         <motion.div key={`${p.invitationId}-${p.name}`}
                           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                           transition={{ delay: i * 0.02 }}
-                          className="flex items-center justify-between gap-4 px-5 py-3.5"
+                          className="flex items-center justify-between gap-2 sm:gap-4 px-3.5 sm:px-5 py-3 sm:py-3.5"
                           style={{
                             background: i % 2 === 0 ? "rgba(201,169,122,0.035)" : "transparent",
                             borderBottom: i < filteredPeople.length - 1 ? "1px solid rgba(201,169,122,0.06)" : "none",
                           }}>
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                             <span className="text-sm font-light truncate" style={{ color: "rgba(255,248,240,0.85)" }}>
                               {p.name}
                             </span>
                             {p.groupSize > 1 && (
-                              <span className="text-[9px] px-2 py-0.5 rounded-full flex-shrink-0"
+                              <span className="hidden sm:inline-block text-[9px] px-2 py-0.5 rounded-full flex-shrink-0"
                                 style={{ background: "rgba(201,169,122,0.08)", color: "rgba(201,169,122,0.45)" }}>
                                 grupo de {p.groupSize}
                               </span>
                             )}
+                            {p.side && <SideBadge side={p.side} />}
                             {p.opened && (
                               <span className="text-[10px] flex-shrink-0" title="Invitación abierta" style={{ color: "rgba(201,169,122,0.3)" }}>
                                 👁
@@ -842,7 +1003,6 @@ Ale & Ever 🤍✨`
           const title       = isConfirmed ? 'Confirmaron asistencia' : 'Rechazaron asistencia'
           const emoji       = isConfirmed ? '💚' : '💔'
 
-          // Construir lista: cada invitación que tenga al menos un nombre en el array correspondiente
           const rows = invitations
             .map(inv => ({
               inv,
@@ -874,7 +1034,6 @@ Ale & Ever 🤍✨`
                 transition={{ type: "spring", damping: 24, stiffness: 300 }}
                 onClick={e => e.stopPropagation()}>
 
-                {/* Header del modal */}
                 <div className="p-6 pb-4 text-center flex-shrink-0" style={{ borderBottom: `1px solid ${borderColor}` }}>
                   <p className="text-3xl mb-2">{emoji}</p>
                   <p className="text-[9px] tracking-[4px] uppercase mb-1" style={{ color: "rgba(201,169,122,0.4)" }}>— Detalle —</p>
@@ -886,7 +1045,6 @@ Ale & Ever 🤍✨`
                   </div>
                 </div>
 
-                {/* Lista scrolleable */}
                 <div className="overflow-y-auto p-4 space-y-3 flex-1">
                   {rows.length === 0 ? (
                     <p className="text-center py-10 font-serif text-lg" style={{ color: "rgba(201,169,122,0.35)", fontStyle: "italic" }}>
@@ -899,7 +1057,12 @@ Ale & Ever 🤍✨`
                       className="rounded-2xl p-4"
                       style={{ border: `1px solid ${borderColor}`, background: bgRow }}>
 
-                      {/* Personas que confirmaron/rechazaron */}
+                      {inv.side && (
+                        <div className="mb-2">
+                          <SideBadge side={inv.side} />
+                        </div>
+                      )}
+
                       <div className="space-y-1.5 mb-2">
                         {names.map((name, j) => (
                           <div key={j} className="flex items-center gap-2">
@@ -909,7 +1072,6 @@ Ale & Ever 🤍✨`
                         ))}
                       </div>
 
-                      {/* Personas del mismo grupo con respuesta opuesta */}
                       {others.length > 0 && (
                         <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(201,169,122,0.08)" }}>
                           <p className="text-[8px] tracking-[2px] uppercase mb-1" style={{ color: "rgba(201,169,122,0.3)" }}>
@@ -929,7 +1091,6 @@ Ale & Ever 🤍✨`
                   ))}
                 </div>
 
-                {/* Footer */}
                 <div className="p-4 flex-shrink-0" style={{ borderTop: "1px solid rgba(201,169,122,0.08)" }}>
                   <motion.button onClick={() => setGuestModal(null)} whileTap={{ scale: 0.97 }}
                     className="w-full py-3 rounded-xl text-[10px] tracking-[3px] uppercase font-bold transition-all"

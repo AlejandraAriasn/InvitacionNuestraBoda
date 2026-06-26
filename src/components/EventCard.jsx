@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 
-export default function EventCard({ icon, title, hour, place, address, mapUrl }) {
+export default function EventCard({ icon, title, hour, place, address, mapUrl, extraNote }) {
   return (
     <motion.div
       className="relative border rounded-2xl p-8 text-center overflow-hidden group"
@@ -44,27 +44,35 @@ export default function EventCard({ icon, title, hour, place, address, mapUrl })
 
       {/* Botón mapa */}
       {mapUrl && (
-        <a
-          href={mapUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative z-10 inline-flex items-center gap-2 mt-6 px-6 py-3 text-xs tracking-[3px] uppercase font-medium rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
-          style={{
-            border: '1px solid rgba(200,136,106,0.5)',
-            color: '#8b3a3a',
-            background: 'transparent',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = '#c8886a'
-            e.currentTarget.style.color = '#fff8f4'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = '#8b3a3a'
-          }}
-        >
-          📍 Ver en mapa
-        </a>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative z-10 inline-flex items-center gap-2 px-6 py-3 text-xs tracking-[3px] uppercase font-medium rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
+            style={{
+              border: '1px solid rgba(200,136,106,0.5)',
+              color: '#8b3a3a',
+              background: 'transparent',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = '#c8886a'
+              e.currentTarget.style.color = '#fff8f4'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = '#8b3a3a'
+            }}
+          >
+            📍 Ver en mapa
+          </a>
+
+          {extraNote && (
+            <p className="mt-3 text-[9px] tracking-[3px] uppercase font-semibold italic" style={{ color: '#b06b4f' }}>
+              {extraNote}
+            </p>
+          )}
+        </div>
       )}
     </motion.div>
   )

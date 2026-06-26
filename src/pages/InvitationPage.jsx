@@ -52,13 +52,14 @@ function MusicPlayer({ src, shouldPlay }) {
     return () => clearTimeout(t);
   }, [shouldPlay]);
 
-  // Loop manual
+  // Reproducción única: al terminar, se detiene y no vuelve a iniciar
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const onEnded = () => {
+      audio.pause();
       audio.currentTime = 0;
-      audio.play().catch(() => {});
+      setIsPlaying(false);
     };
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
@@ -1186,15 +1187,17 @@ export default function InvitationPage() {
               <motion.div className="mb-6" initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
                 <motion.span className="text-5xl block" animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}>🥂</motion.span>
               </motion.div>
-              <EventCard icon="🥂" title="Recepción" hour={cfg.reception.hour} place={cfg.reception.place} address={cfg.reception.address} mapUrl={cfg.reception.mapUrl} />
+              <EventCard icon="🥂" title="Recepción" hour={cfg.reception.hour} place={cfg.reception.place} address={cfg.reception.address} mapUrl={cfg.reception.mapUrl} extraNote="💌 Lluvia de sobres" />
               <FadeSection className="mt-8" delay={0.3}>
-                <motion.div className="inline-flex items-center gap-3 px-8 py-3 border border-[#c8886a]/40 rounded-full"
+                <motion.div className="inline-flex flex-col items-center gap-2 px-8 py-3 border border-[#c8886a]/40 rounded-full"
                   style={{ background: "rgba(200,136,106,0.06)" }}
                   whileHover={{ scale: 1.03, borderColor: "rgba(200,136,106,0.7)", background: "rgba(200,136,106,0.10)" }}
                   transition={{ duration: 0.3 }}>
-                  <span className="text-[#c9a97a] text-sm">✦</span>
-                  <p className="text-[#8b3a3a] text-[10px] tracking-[4px] uppercase font-bold">Vestimenta · {cfg.dresscode}</p>
-                  <span className="text-[#c9a97a] text-sm">✦</span>
+                  <div className="inline-flex items-center gap-3">
+                    <span className="text-[#c9a97a] text-sm">✦</span>
+                    <p className="text-[#8b3a3a] text-[10px] tracking-[4px] uppercase font-bold">Vestimenta · {cfg.dresscode}</p>
+                    <span className="text-[#c9a97a] text-sm">✦</span>
+                  </div>
                 </motion.div>
               </FadeSection>
             </FadeSection>
